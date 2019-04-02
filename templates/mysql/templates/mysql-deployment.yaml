@@ -1,0 +1,43 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+ name: mysql
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   app: mysql
+ template:
+  metadata:
+   labels:
+    app: mysql
+  spec:
+   containers:
+   - name: mysql
+     image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+     pullPolicy: {{ .Values.image.pullPolicy }}
+     env:
+       - name: MYSQL_ROOT_PASSWORD
+         valueFrom:
+           configMapKeyRef:
+             name: mysql-config
+             key: MYSQL_ROOT_PASSWORD
+     ports:
+      - containerPort: 3306
+     volumeMounts:
+      - name: mysql-config
+        mountPath: /etc/mysql/
+      - name: mysql-data
+        mountPath: /var/lib/mysql
+   volumes:
+   - name: mysql-config
+     configMap:
+      name: mysql-config
+      items:
+       - key: my.cnf
+         path: my.cnf
+   - name: mysql-data
+     persistentVolumeClaim:
+          claimName: mysql-data
+
+
